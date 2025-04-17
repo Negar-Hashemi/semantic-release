@@ -15,9 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest] # Operating systems to test
-        node-version: [18, 20, 22]                      # Node.js versions to test
-        attempt: [1, 2, 3, 4, 5]                        # Repeat tests 5 times
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18, 20, 22]
+        attempt: [1, 2, 3, 4, 5]
 
     steps:
       - name: Checkout code
@@ -34,9 +34,35 @@ jobs:
       - name: Run Prettier check
         run: npx prettier --write .
 
+      # Start Docker on Ubuntu
+      - name: Start Docker (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo systemctl start docker
+          docker --version
+
+      # Install Docker on macOS
+      - name: Install Docker (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install --cask docker
+          open /Applications/Docker.app
+          echo "Waiting for Docker to start..."
+          while ! docker system info > /dev/null 2>&1; do sleep 1; done
+          docker --version
+
+      # Install Docker on Windows
+      - name: Install Docker (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install docker-desktop --pre --confirm
+          Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+          Write-Output "Waiting for Docker to start..."
+          while (-not (docker info -ErrorAction SilentlyContinue)) { Start-Sleep -Seconds 1 }
+          docker --version
+        shell: pwsh
+
       - name: Testing on OS (${{ matrix.os }}) with Node.js (version ${{ matrix.node-version }}) attempt ${{ matrix.attempt }}
         run: |
           echo "Run attempt: ${{ matrix.attempt }}"
           npm test
-
-    continue-on-error: false
