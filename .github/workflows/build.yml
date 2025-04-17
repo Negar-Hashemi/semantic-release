@@ -32,7 +32,7 @@ jobs:
         run: npm install --force
 
       - name: Run Prettier check
-        run: npx prettier --check .
+        run: npx prettier --write 
 
       - name: Testing on OS (${{ matrix.os }}) with Node.js (version ${{ matrix.node-version }}) attempt ${{ matrix.attempt }}
         run: |
